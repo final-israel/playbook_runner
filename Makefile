@@ -10,14 +10,14 @@ _build:
 _publish:
 	@echo "Publishing"
 	cp ${PWD}/../versions/applications/playbook_runner/version.py ${PWD}/playbook_runner
-	python3 ${PWD}/setup.py sdist upload -r internal
+	twine upload ${PWD}/dist/*
 	git checkout -- ${PWD}/../versions/applications/playbook_runner/version.py
 
 major: check _major _build _publish
 
 _major:
 	@echo "Major Release"
-	$(eval VERSION := $(shell version_manager \
+	$(eval VERSION := $(shell ver_stamp \
 	--repos_path ${PWD}/../ \
 	--app_version_file ${PWD}//../versions/applications/playbook_runner/version.py \
 	--release_mode major --app_name ${NAME}))
@@ -26,7 +26,7 @@ minor: check _minor _build _publish
 
 _minor:
 	@echo "Minor Release"
-	$(eval VERSION := $(shell version_manager \
+	$(eval VERSION := $(shell ver_stamp \
 	--repos_path ${PWD}/../ \
 	--app_version_file ${PWD}/../versions/applications/playbook_runner/version.py \
 	--release_mode minor --app_name ${NAME}))
@@ -35,14 +35,14 @@ patch: check _patch _build _publish
 
 _patch:
 	@echo "Patch Release"
-	$(eval VERSION := $(shell version_manager \
+	$(eval VERSION := $(shell ver_stamp \
 	--repos_path ${PWD}/../ \
 	--app_version_file ${PWD}/../versions/applications/playbook_runner/version.py \
 	--release_mode patch --app_name ${NAME}))
 
 _debug:
 	@echo "Debug Release"
-	$(eval VERSION := $(shell version_manager \
+	$(eval VERSION := $(shell ver_stamp \
 	--repos_path ${PWD}/../ \
 	--app_version_file ${PWD}/../versions/applications/playbook_runner/version.py \
 	--release_mode debug --app_name ${NAME}))
