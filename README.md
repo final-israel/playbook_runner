@@ -9,7 +9,7 @@ A very simple library for running Ansible playbooks and retreiving their output 
 ```python
 from playbook_runner import playbook_runner as playbook_runner
 
-ap = playbook_runner.AnsiblePlaybook('/path/to/inventory')
+ap = playbook_runner.AnsiblePlaybook('/path/to/inventory', '/path/to/ansible/playbook/directory')
 ret = ap.run_playbook('playbook.yml', {'play_host_groups': 'my_group', 'param1': 'val1'})
 ```
 
