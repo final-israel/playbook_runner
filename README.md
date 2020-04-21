@@ -25,7 +25,7 @@ pip3 install playbook-runner
 
 ## Contributing
 
-If you want to contribute to version-stamp development:
+If you want to contribute to `playbook_runner` development:
 
 1. Make a fresh fork of `playbook_runner` repository
 
