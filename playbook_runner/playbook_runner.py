@@ -95,7 +95,9 @@ class AnsiblePlaybook(object):
 
     def run_playbook(self, play_filename, extra_vars_dict={}):
         if not extra_vars_dict:
-            extra_vars_dict = {'play_host_groups': 'localhost'}
+            extra_vars_dict = {}
+        if 'play_host_groups' not in extra_vars_dict:
+            extra_vars_dict['play_host_groups'] = 'localhost'
 
         with tempfile.TemporaryDirectory() as tmp_dir_name:
             path_str = '{0}/'.format(tmp_dir_name)
