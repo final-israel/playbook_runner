@@ -1,0 +1,9 @@
+---
+- name: Going to write task outputs to file
+  debug: var=task_result_to_output
+
+- name: Write to file
+  lineinfile:
+    path: "{{output_path}}/{{inventory_hostname}}.json"
+    line: "[{{task_result_to_output | to_json}}], "
+  delegate_to: localhost

@@ -1,0 +1,14 @@
+---
+- hosts: "{{ play_host_groups }}"
+  tasks:
+  - name: untag and remove docker image
+    docker_image:
+      name: "{{ image_name }}"
+      state: absent
+      force: yes
+    register: results
+    ignore_errors: yes
+  - name: fail the task when not skipping errors
+    fail:
+      msg: "the task failed and skip_errors={{skip_errors|bool}}"
+    when: (not skip_errors|bool) and (results is not success)

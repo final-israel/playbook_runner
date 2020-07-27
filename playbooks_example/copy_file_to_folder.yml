@@ -1,0 +1,14 @@
+---
+- hosts: "{{ play_host_groups }}"
+  gather_facts: no
+  tasks:
+  - name: create folder
+    file:
+      path: "{{ folder_name }}"
+      state: directory
+      mode: 0755
+
+  - name: copy file
+    copy:
+      src: "{{ file_src }}"
+      dest: "{{ folder_name }}/{{ file_dst }}"

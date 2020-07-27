@@ -1,0 +1,9 @@
+---
+- hosts: "{{ play_host_groups }}"
+  tasks:
+  - name: docker login {{state}} for {{registry}}
+    docker_login:
+      registry: "{{ registry }}"
+      state: "{{ state }}"
+      username: "{{ username }}"
+      password: "{{ password }}"

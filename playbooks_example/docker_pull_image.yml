@@ -1,0 +1,16 @@
+---
+- hosts: "{{ play_host_groups }}"
+  serial: yes
+  tasks:
+  - name: pull an image
+    docker_image:
+      name: "{{ pull_image }}"
+      pull: yes
+      push: no
+    register: task_result_to_output
+    ignore_errors: yes
+  - name: fail the task when not skipping errors
+    fail:
+      msg: "the task failed and skip_errors={{skip_errors|bool}}"
+    when: (not skip_errors|bool) and (task_result_to_output is not success)
+  - include: write_task_output_to_file.yml

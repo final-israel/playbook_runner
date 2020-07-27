@@ -1,0 +1,11 @@
+---
+- hosts: "{{ play_host_groups }}"
+  tasks:
+  - name: build docker image
+    docker_image:
+      path: "{{ build_context_path }}"
+      name: "{{ image_name }}"
+      tag: "{{ image_tag }}"
+      push: yes
+      pull: no
+      state: present

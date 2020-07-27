@@ -1,0 +1,12 @@
+- hosts: "{{ play_host_groups }}"
+  tasks:
+  - name: download docker image from tar
+    get_url:
+      url: "http://<url>/{{ image_tar_name }}"
+      dest: "{{ image_destination_dir }}"
+
+  - name: docker load image
+    docker_image:
+     name: "{{ image_name }}"
+     load_path: "{{ image_destination_dir }}/{{ image_tar_name }}"
+     tag: "{{ image_tag }}"

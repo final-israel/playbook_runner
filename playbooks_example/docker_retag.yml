@@ -1,0 +1,14 @@
+---
+- hosts: "{{ play_host_groups }}"
+  gather_facts: no
+  tasks:
+  - name: retag image
+    shell:
+      "docker tag {{ origin_image_tag }} {{ dest_image_tag }}"
+    register: task_result_to_output
+    ignore_errors: yes
+  - name: fail the task when not skipping errors
+    fail:
+      msg: "the task failed and skip_errors={{skip_errors|bool}}"
+    when: (not skip_errors|bool) and (task_result_to_output is not success)
+  - include: write_task_output_to_file.yml
