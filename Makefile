@@ -7,45 +7,37 @@ build: check  _debug _build
 _build:
 	@echo "Building"
 
-_publish:
+_publish: clean
 	@echo "Publishing"
-	cp ${PWD}/../versions/applications/playbook_runner/version.py ${PWD}/playbook_runner
+	vmn show --verbose ${NAME} > ver.yml
+	python3 ${PWD}/gen_ver.py
+	python3 setup.py sdist bdist_wheel
 	twine upload ${PWD}/dist/*
-	git checkout -- ${PWD}/../versions/applications/playbook_runner/version.py
+	git checkout -- ${PWD}/playbook_runner/version.py
+	rm -rf ${PWD}/dist
+	rm -rf ${PWD}/build
 
 major: check _major _build _publish
 
 _major:
 	@echo "Major Release"
-	$(eval VERSION := $(shell ver_stamp \
-	--repos_path ${PWD}/../ \
-	--app_version_file ${PWD}//../versions/applications/playbook_runner/version.py \
-	--release_mode major --app_name ${NAME}))
+	$(eval VERSION := $(shell vmn stamp -r major ${NAME}))
 
 minor: check _minor _build _publish
 
 _minor:
 	@echo "Minor Release"
-	$(eval VERSION := $(shell ver_stamp \
-	--repos_path ${PWD}/../ \
-	--app_version_file ${PWD}/../versions/applications/playbook_runner/version.py \
-	--release_mode minor --app_name ${NAME}))
+	$(eval VERSION := $(shell vmn stamp -r minor ${NAME}))
 
 patch: check _patch _build _publish
 
 _patch:
 	@echo "Patch Release"
-	$(eval VERSION := $(shell ver_stamp \
-	--repos_path ${PWD}/../ \
-	--app_version_file ${PWD}/../versions/applications/playbook_runner/version.py \
-	--release_mode patch --app_name ${NAME}))
+	$(eval VERSION := $(shell vmn stamp -r patch ${NAME}))
 
 _debug:
 	@echo "Debug Release"
-	$(eval VERSION := $(shell ver_stamp \
-	--repos_path ${PWD}/../ \
-	--app_version_file ${PWD}/../versions/applications/playbook_runner/version.py \
-	--release_mode debug --app_name ${NAME}))
+	$(eval VERSION := $(shell vmn show ${NAME}))
 
 check: check-local
 
@@ -54,9 +46,6 @@ check-local:
 	@echo "-------------------------------------------------------------"
 	@echo "-~      Running static checks                              --"
 	@echo "-------------------------------------------------------------"
-	PYTHONPATH=${PWD} flake8 --version
-	PYTHONPATH=${PWD} flake8 --exclude version.py \
-	--ignore E402,E722,E123,E126,E125,E127,E128,E129 ${PWD}/playbook_runner/
 	@echo "-------------------------------------------------------------"
 	@echo "-~      Running unit tests                                 --"
 	@echo "-------------------------------------------------------------"
@@ -64,4 +53,6 @@ check-local:
 	@echo "-------------------------------------------------------------"
 
 clean:
-	echo 'Nothing to clean'
+	git checkout -- ${PWD}/playbook_runner/version.py
+	rm -rf ${PWD}/dist
+	rm -rf ${PWD}/build
