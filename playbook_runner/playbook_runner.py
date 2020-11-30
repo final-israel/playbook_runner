@@ -4,23 +4,41 @@ import subprocess
 import copy
 import json
 import logging
-
+import shutil
 
 LOGGER = logging.getLogger('playbook_runner')
 
 
 class AnsiblePlaybook(object):
-    def __init__(self, ansible_playbook_inventory, ansible_playbook_directory):
+    def __init__(
+            self,
+            ansible_playbook_inventory,
+            ansible_playbook_directory,
+            cleanup_output=False):
         self._ansible_playbook_inventory = ansible_playbook_inventory
         self._ansible_playbook_directory = ansible_playbook_directory
 
         os.environ['ANSIBLE_SSH_RETRIES'] = '15'
         os.environ['ANSIBLE_INVENTORY_UNPARSED_FAILED'] = 'true'
 
-        self._tmp_dir_name = tempfile.TemporaryDirectory()
+        self._path_str = tempfile.mkdtemp(prefix='play_book_runner_')
+
+        self._hosts = set()
+        self._cleanup_output = cleanup_output
+
+        LOGGER.info('Output path: {0}'.format(self._path_str))
+        LOGGER.info('CWD: {0}'.format(self._ansible_playbook_directory))
 
     def __del__(self):
-        self._tmp_dir_name.cleanup()
+        if self._cleanup_output:
+            try:
+                shutil.rmtree(self._path_str)
+            except OSError as e:
+                LOGGER.error(
+                    'Error removing: {0}'.format(
+                        self._path_str
+                    )
+                )
 
     @staticmethod
     def _get_ansible_cmd(inventory_file, playbook_file,
@@ -105,9 +123,8 @@ class AnsiblePlaybook(object):
         if 'play_host_groups' not in extra_vars_dict:
             extra_vars_dict['play_host_groups'] = 'localhost'
 
-        path_str = '{0}/'.format(self._tmp_dir_name.name)
         local_extra_vars = copy.deepcopy(extra_vars_dict)
-        local_extra_vars['output_path'] = path_str
+        local_extra_vars['output_path'] = self._path_str
         if 'skip_errors' not in local_extra_vars:
             local_extra_vars['skip_errors'] = False
         if 'gather_facts_for_pb' not in local_extra_vars:
@@ -131,18 +148,19 @@ class AnsiblePlaybook(object):
         if '(1):' in hosts:
             hosts.remove('(1):')
 
-        for host in hosts:
-            file_path = '{0}/{1}.json'.format(path_str, host)
-        with open(file_path, "w") as f:
-            f.write('[')
+        self._hosts.add(*hosts)
+
+        for host in self._hosts:
+            file_path = '{0}/{1}.json'.format(self._path_str, host)
+            if not os.path.isfile(file_path):
+                with open(file_path, 'w+') as f:
+                    f.write('[')
 
         LOGGER.info(
             'Command is about to be run:\n{0}'.format(' '.join(cmd))
         )
-        LOGGER.info('CWD: {0}'.format(self._ansible_playbook_directory))
-
         ansible_output_path = '{0}/ansible_output_path.txt'.format(
-            path_str
+            self._path_str
         )
         with open(ansible_output_path, "w") as f_ansible_output_path:
             result = subprocess.run(
@@ -153,17 +171,21 @@ class AnsiblePlaybook(object):
                 stderr=subprocess.STDOUT,
             )
 
+            if 'skip_errors' not in extra_vars_dict or \
+                    not extra_vars_dict['skip_errors']:
+                if result.returncode != 0:
+                    LOGGER.info('Failed to run: {0}'.format(cmd))
+
+        return result.returncode
+
+    def get_output(self):
         last_output = {}
-        for host in hosts:
+        for host in self._hosts:
             data = []
-            file_path = '{0}/{1}.json'.format(path_str, host)
+            file_path = '{0}/{1}.json'.format(self._path_str, host)
             with open(file_path) as f:
                 lines = f.readlines()
                 data = lines
-
-            # Only if the playbook has written something
-            if len(data) <= 1:
-                continue
 
             # format file into a correct json format
             with open(file_path, "w+") as f:
@@ -176,14 +198,14 @@ class AnsiblePlaybook(object):
             with open(file_path) as f:
                 last_output[host] = json.load(f)
 
+            # Only if the playbook has written something
+            if len(data) <= 1:
+                continue
+
         host_output_dict = {}
         for k, v in last_output.items():
             host_output_dict[k] = []
             for item in v:
                 host_output_dict[k].append(item[0])
-
-        if 'skip_errors' not in extra_vars_dict or not extra_vars_dict[
-            'skip_errors']:
-            assert 0 == result.returncode
 
         return host_output_dict
