@@ -10,7 +10,7 @@ setuptools.setup(
     author_email='pavelr@final.israel',
     url="https://github.com/final-israel/playbook_runner",
     description=description,
-    long_description=open('README.md').read(),
+    long_description=description,
     package_dir={'playbook_runner': 'playbook_runner'},
     packages=['playbook_runner',],
 )
