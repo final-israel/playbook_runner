@@ -117,7 +117,7 @@ class AnsiblePlaybook(object):
 
         return hosts_in_group
 
-    def run_playbook(self, play_filename, extra_vars_dict={}):
+    def run_playbook(self, play_filename, extra_vars_dict=None):
         if not extra_vars_dict:
             extra_vars_dict = {}
         if 'play_host_groups' not in extra_vars_dict:
@@ -141,7 +141,7 @@ class AnsiblePlaybook(object):
             extra_vars_dict['play_host_groups'],
             '{0}/{1}'.format(
                 self._ansible_playbook_directory,
-                play_filename
+                '_dummy_playbook.yml'
             ),
         )
 
@@ -174,7 +174,9 @@ class AnsiblePlaybook(object):
             if 'skip_errors' not in extra_vars_dict or \
                     not extra_vars_dict['skip_errors']:
                 if result.returncode != 0:
-                    LOGGER.info('Failed to run: {0}'.format(cmd))
+                    LOGGER.info(
+                        'Failed to run:\n{0}'.format(' '.join(cmd))
+                    )
 
         return result.returncode
 

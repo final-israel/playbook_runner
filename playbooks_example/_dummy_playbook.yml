@@ -1,0 +1,6 @@
+- hosts: "{{ play_host_groups }}"
+  tasks:
+  - name: Dummy playbook
+    service:
+      state: stopped
+      name: 'dummy'

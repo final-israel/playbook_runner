@@ -17,7 +17,11 @@ def run_shell_command(host, cmd, ap):
 
 
 def test_basic_stamp(ap):
-    run_shell_command('172.17.0.2', 'hostname', ap)
-    run_shell_command('172.17.0.2', 'ls', ap)
+    ret = run_shell_command('172.17.0.2', 'hostname', ap)
+    assert ret == 0
+
+    ret = run_shell_command('172.17.0.2', 'ls', ap)
+    assert ret == 0
+
     ret = ap.get_output()
     assert ret['172.17.0.2'][0]['stdout'] == 'openssh-server'
