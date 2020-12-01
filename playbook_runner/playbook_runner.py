@@ -153,7 +153,7 @@ class AnsiblePlaybook(object):
         for host in self._hosts:
             file_path = '{0}/{1}.json'.format(self._path_str, host)
             if not os.path.isfile(file_path):
-                with open(file_path, 'w+') as f:
+                with open(file_path, 'w') as f:
                     f.write('[')
 
         LOGGER.info(
@@ -162,7 +162,7 @@ class AnsiblePlaybook(object):
         ansible_output_path = '{0}/ansible_output_path.txt'.format(
             self._path_str
         )
-        with open(ansible_output_path, "w") as f_ansible_output_path:
+        with open(ansible_output_path, "a+") as f_ansible_output_path:
             result = subprocess.run(
                 cmd,
                 cwd=self._ansible_playbook_directory,
@@ -199,6 +199,8 @@ class AnsiblePlaybook(object):
 
             with open(file_path) as f:
                 last_output[host] = json.load(f)
+
+            os.remove(file_path)
 
             # Only if the playbook has written something
             if len(data) <= 1:
