@@ -69,17 +69,15 @@ class AnsiblePlaybook(object):
 
         return ansible_command
 
-    def _get_hosts_by_group(self, inventory, group, some_playbook):
+    def _get_hosts_by_group(self, inventory, group):
         get_hosts_by_group_cmd = [
-            "ansible-playbook",
+            "ansible",
             "--timeout",
             "60",
-            '--list-hosts',
             "-i",
             inventory,
-            some_playbook,
-            '-e',
-            '{0}={1}'.format('play_host_groups', group)
+            '--list-hosts',
+            group
         ]
 
         result = subprocess.run(
@@ -107,7 +105,9 @@ class AnsiblePlaybook(object):
 
             i = i + 1
 
-        if i == len(tmp):
+        # ignore the full line "hosts (#):"
+        i = i + 1
+        if i >= len(tmp):
             raise RuntimeError(
                 'No hosts were found for group: {0}'.format(group)
             )
@@ -138,15 +138,8 @@ class AnsiblePlaybook(object):
 
         hosts = self._get_hosts_by_group(
             self._ansible_playbook_inventory,
-            local_extra_vars['play_host_groups'],
-            '{0}/{1}'.format(
-                self._ansible_playbook_directory,
-                '_dummy_playbook.yml'
-            ),
+            local_extra_vars['play_host_groups']
         )
-
-        if '(1):' in hosts:
-            hosts.remove('(1):')
 
         self._hosts.add(*hosts)
 
