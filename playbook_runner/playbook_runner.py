@@ -120,8 +120,6 @@ class AnsiblePlaybook(object):
     def run_playbook(self, play_filename, extra_vars_dict=None):
         if not extra_vars_dict:
             extra_vars_dict = {}
-        if 'play_host_groups' not in extra_vars_dict:
-            extra_vars_dict['play_host_groups'] = 'localhost'
 
         local_extra_vars = copy.deepcopy(extra_vars_dict)
         local_extra_vars['output_path'] = self._path_str
@@ -129,6 +127,8 @@ class AnsiblePlaybook(object):
             local_extra_vars['skip_errors'] = False
         if 'gather_facts_for_pb' not in local_extra_vars:
             local_extra_vars['gather_facts_for_pb'] = False
+        if 'play_host_groups' not in local_extra_vars:
+            local_extra_vars['play_host_groups'] = 'localhost'
 
         cmd = self._get_ansible_cmd(
             self._ansible_playbook_inventory,
@@ -138,7 +138,7 @@ class AnsiblePlaybook(object):
 
         hosts = self._get_hosts_by_group(
             self._ansible_playbook_inventory,
-            extra_vars_dict['play_host_groups'],
+            local_extra_vars['play_host_groups'],
             '{0}/{1}'.format(
                 self._ansible_playbook_directory,
                 '_dummy_playbook.yml'
@@ -171,8 +171,7 @@ class AnsiblePlaybook(object):
                 stderr=subprocess.STDOUT,
             )
 
-            if 'skip_errors' not in extra_vars_dict or \
-                    not extra_vars_dict['skip_errors']:
+            if not local_extra_vars['skip_errors']:
                 if result.returncode != 0:
                     LOGGER.info(
                         'Failed to run:\n{0}'.format(' '.join(cmd))
