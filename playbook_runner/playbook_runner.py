@@ -26,6 +26,13 @@ class AnsiblePlaybook(object):
         self._hosts = set()
         self._cleanup_output = cleanup_output
 
+        hosts = self._get_hosts_by_group(
+            self._ansible_playbook_inventory,
+            'all'
+        )
+
+        self._hosts.add(*hosts)
+
         LOGGER.info('Output path: {0}'.format(self._path_str))
         LOGGER.info('CWD: {0}'.format(self._ansible_playbook_directory))
 
@@ -135,13 +142,6 @@ class AnsiblePlaybook(object):
             '{0}/{1}'.format(
                 self._ansible_playbook_directory, play_filename),
             extra_vars_dict=local_extra_vars)
-
-        hosts = self._get_hosts_by_group(
-            self._ansible_playbook_inventory,
-            local_extra_vars['play_host_groups']
-        )
-
-        self._hosts.add(*hosts)
 
         for host in self._hosts:
             file_path = '{0}/{1}.json'.format(self._path_str, host)
