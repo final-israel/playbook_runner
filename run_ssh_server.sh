@@ -1,10 +1,6 @@
 #!/bin/bash
 
-# apk add --update --no-cache python3 && ln -sf python3 /usr/bin/python
-# python3 -m ensurepip
-# pip3 install --no-cache --upgrade pip setuptools
-
-docker run -d \                                                                                                                                                                                        ~
+docker run --rm -d \
   --name=openssh-server \
   --hostname=openssh-server `#optional` \
   -e PUID=1000 \
@@ -18,3 +14,8 @@ docker run -d \                                                                 
   -v /tmp/config:/config \
   --restart unless-stopped \
   ghcr.io/linuxserver/openssh-server
+
+docker exec openssh-server apk add --update --no-cache python3 && ln -sf python3 /usr/bin/python
+docker exec openssh-server python3 -m ensurepip
+docker exec openssh-server pip3 install --no-cache --upgrade pip setuptools
+
