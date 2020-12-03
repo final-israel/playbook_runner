@@ -32,7 +32,7 @@ class AnsiblePlaybook(object):
             'all'
         )
 
-        self._hosts.add(*hosts)
+        self._hosts.update(hosts)
 
         LOGGER.info('Output path: {0}'.format(self._path_str))
         LOGGER.info('CWD: {0}'.format(self._ansible_playbook_directory))
@@ -209,7 +209,10 @@ class AnsiblePlaybook(object):
                 f.write(']')
 
             with open(file_path) as f:
-                last_output[host] = json.load(f)
+                try:
+                    last_output[host] = json.load(f)
+                except Exception:
+                    pass
 
             os.remove(file_path)
 
