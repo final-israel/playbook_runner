@@ -5,6 +5,7 @@ import copy
 import json
 import logging
 import shutil
+from string import Template
 
 LOGGER = logging.getLogger('playbook_runner')
 
@@ -124,6 +125,20 @@ class AnsiblePlaybook(object):
 
         return hosts_in_group
 
+    def _generate_parent_play(self, dir_path, play_filename):
+        playbook_path = os.path.join(dir_path, play_filename)
+        tmplt_path = os.path.join(os.path.dirname(__file__), 'parent_play.tmplt')
+        parent_path = '{0}/{1}.json'.format(self._path_str, play_filename + '.parent')
+
+        with open(tmplt_path, "r") as tmplt_file:
+            tmplt = Template(tmplt_file.read())
+
+        with open(parent_path, 'w') as parent_file:
+            parent_file.write(tmplt.substitute({"PLAYBOOK_PATH": playbook_path}))
+
+        return parent_path
+
+
     def run_playbook(self, play_filename, extra_vars_dict=None):
         if not extra_vars_dict:
             extra_vars_dict = {}
@@ -137,10 +152,10 @@ class AnsiblePlaybook(object):
         if 'play_host_groups' not in local_extra_vars:
             local_extra_vars['play_host_groups'] = 'localhost'
 
+        path = self._generate_parent_play(self._ansible_playbook_directory, play_filename)
         cmd = self._get_ansible_cmd(
             self._ansible_playbook_inventory,
-            '{0}/{1}'.format(
-                self._ansible_playbook_directory, play_filename),
+            path,
             extra_vars_dict=local_extra_vars)
 
         for host in self._hosts:
@@ -155,6 +170,9 @@ class AnsiblePlaybook(object):
         ansible_output_path = '{0}/ansible_output_path.txt'.format(
             self._path_str
         )
+
+        our_env = os.environ.copy()
+        our_env["ANSIBLE_HOST_KEY_CHECKING"] = "False"
         with open(ansible_output_path, "a+") as f_ansible_output_path:
             result = subprocess.run(
                 cmd,
@@ -162,6 +180,7 @@ class AnsiblePlaybook(object):
                 timeout=120,
                 stdout=f_ansible_output_path,
                 stderr=subprocess.STDOUT,
+                env=our_env
             )
 
             if not local_extra_vars['skip_errors']:
@@ -182,10 +201,10 @@ class AnsiblePlaybook(object):
                 data = lines
 
             # format file into a correct json format
-            with open(file_path, "w+") as f:
-                last_line = data[len(data) - 1]
-                last_line = last_line[:-3]
-                data[len(data) - 1] = last_line
+            with open(file_path, "w") as f:
+                last_line = data[-1]
+                last_line = last_line.strip()[:-1]
+                data[-1] = last_line
                 f.writelines(data)
                 f.write(']')
 
