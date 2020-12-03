@@ -32,6 +32,9 @@ class AnsiblePlaybook(object):
             'all'
         )
 
+        hosts.append('localhost')
+        hosts.append('127.0.0.1')
+
         self._hosts.update(hosts)
 
         LOGGER.info('Output path: {0}'.format(self._path_str))
