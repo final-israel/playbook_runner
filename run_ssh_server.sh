@@ -12,10 +12,10 @@ docker run --rm -d \
   -e USER_NAME=sshuser `#optional` \
   -p 2222:2222 \
   -v /tmp/config:/config \
-  --restart unless-stopped \
   ghcr.io/linuxserver/openssh-server
 
-docker exec openssh-server apk add --update --no-cache python3 && ln -sf python3 /usr/bin/python
+docker exec openssh-server apk add --update --no-cache python3
+docker exec openssh-server ln -sf python3 /usr/bin/python
 docker exec openssh-server python3 -m ensurepip
 docker exec openssh-server pip3 install --no-cache --upgrade pip setuptools
 
