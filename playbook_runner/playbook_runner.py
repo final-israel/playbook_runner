@@ -147,7 +147,7 @@ class AnsiblePlaybook(object):
             extra_vars_dict = {}
 
         local_extra_vars = copy.deepcopy(extra_vars_dict)
-        local_extra_vars['output_path'] = self._path_str
+        local_extra_vars['playbooks_output_path'] = self._path_str
         if 'skip_errors' not in local_extra_vars:
             local_extra_vars['skip_errors'] = False
         if 'gather_facts_for_pb' not in local_extra_vars:

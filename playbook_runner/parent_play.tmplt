@@ -7,7 +7,7 @@
   tasks:
   - name: dump task_result_to_output to play json file
     lineinfile:
-      path: "{{output_path}}/{{inventory_hostname}}.json"
+      path: "{{playbooks_output_path}}/{{inventory_hostname}}.json"
       line: "[{{task_result_to_output | to_json}}], "
     delegate_to: localhost
     when: task_result_to_output is defined
