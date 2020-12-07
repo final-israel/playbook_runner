@@ -79,8 +79,6 @@ class AnsiblePlaybook(object):
             ansible_command.insert(-1, '--extra-vars')
             ansible_command.insert(-1, extra_vars)
 
-        ansible_command = [shlex.quote(s) for s in ansible_command]
-
         return ansible_command
 
     def _get_hosts_by_group(self, inventory, group):
@@ -164,6 +162,8 @@ class AnsiblePlaybook(object):
             path,
             extra_vars_dict=local_extra_vars)
 
+        cmd_for_log = [shlex.quote(s) for s in cmd]
+
         for host in self._hosts:
             file_path = '{0}/{1}.json'.format(self._path_str, host)
             if not os.path.isfile(file_path):
@@ -171,7 +171,7 @@ class AnsiblePlaybook(object):
                     f.write('[')
 
         LOGGER.info(
-            'Command is about to be run:\n{0}'.format(' '.join(cmd))
+            'Command is about to be run:\n{0}'.format(' '.join(cmd_for_log))
         )
         ansible_output_path = '{0}/ansible_output_path.txt'.format(
             self._path_str
@@ -182,7 +182,7 @@ class AnsiblePlaybook(object):
         with open(ansible_output_path, "a+") as f_ansible_output_path:
             f_ansible_output_path.write(
                 '\n\nGoing to run ansible playbook:\n{0}\n\n'.format(
-                    ' '.join(cmd)
+                    ' '.join(cmd_for_log)
                     )
             )
 
@@ -198,7 +198,7 @@ class AnsiblePlaybook(object):
             if not local_extra_vars['skip_errors']:
                 if result.returncode != 0:
                     LOGGER.info(
-                        'Failed to run:\n{0}'.format(' '.join(cmd))
+                        'Failed to run:\n{0}'.format(' '.join(cmd_for_log))
                     )
 
         return result.returncode
