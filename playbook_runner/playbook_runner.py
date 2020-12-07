@@ -180,6 +180,12 @@ class AnsiblePlaybook(object):
         our_env = os.environ.copy()
         our_env["ANSIBLE_HOST_KEY_CHECKING"] = "False"
         with open(ansible_output_path, "a+") as f_ansible_output_path:
+            f_ansible_output_path.write(
+                '\n\nGoing to run ansible playbook:\n{0}\n\n'.format(
+                    ' '.join(cmd)
+                    )
+            )
+
             result = subprocess.run(
                 cmd,
                 cwd=self._ansible_playbook_directory,
