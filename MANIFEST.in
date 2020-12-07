@@ -1,0 +1,6 @@
+include LICENSE
+include README.md
+include playbook_runner/parent_play.tmplt
+
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]
