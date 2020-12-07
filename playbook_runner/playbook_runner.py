@@ -23,7 +23,7 @@ class AnsiblePlaybook(object):
         os.environ['ANSIBLE_SSH_RETRIES'] = '15'
         os.environ['ANSIBLE_INVENTORY_UNPARSED_FAILED'] = 'true'
 
-        self._path_str = tempfile.mkdtemp(prefix='play_book_runner_')
+        self._path_str = tempfile.mkdtemp(prefix='playbook_runner_')
 
         self._hosts = set()
         self._cleanup_output = cleanup_output
