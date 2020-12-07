@@ -5,6 +5,7 @@ import copy
 import json
 import logging
 import shutil
+import shlex
 from string import Template
 
 LOGGER = logging.getLogger('playbook_runner')
@@ -77,6 +78,8 @@ class AnsiblePlaybook(object):
             extra_vars = extra_vars[:-1]
             ansible_command.insert(-1, '--extra-vars')
             ansible_command.insert(-1, extra_vars)
+
+        ansible_command = [shlex.quote(s) for s in ansible_command]
 
         return ansible_command
 
