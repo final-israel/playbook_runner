@@ -197,7 +197,7 @@ class AnsiblePlaybook(object):
 
             if not local_extra_vars['skip_errors']:
                 if result.returncode != 0:
-                    LOGGER.info(
+                    LOGGER.error(
                         'Failed to run:\n{0}'.format(' '.join(cmd_for_log))
                     )
 
