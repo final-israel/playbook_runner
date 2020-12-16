@@ -7,6 +7,9 @@ import logging
 import shutil
 import shlex
 from string import Template
+import string
+import random
+
 
 LOGGER = logging.getLogger('playbook_runner')
 
@@ -133,6 +136,11 @@ class AnsiblePlaybook(object):
         return parent_path
 
     def run_playbook(self, play_filename, extra_vars_dict=None):
+        random_run_id = ''.join(
+            random.choices(
+                string.ascii_uppercase + string.digits, k=64
+            )
+        )
         if not extra_vars_dict:
             extra_vars_dict = {}
 
@@ -175,9 +183,6 @@ class AnsiblePlaybook(object):
                 with open(file_path, 'w') as f:
                     f.write('[')
 
-        LOGGER.info(
-            'Command is about to be run:\n{0}'.format(' '.join(cmd_for_log))
-        )
         ansible_output_path = '{0}/ansible_output_path.txt'.format(
             self._path_str
         )
@@ -186,9 +191,11 @@ class AnsiblePlaybook(object):
         our_env["ANSIBLE_HOST_KEY_CHECKING"] = "False"
         with open(ansible_output_path, "a+") as f_ansible_output_path:
             f_ansible_output_path.write(
-                '\n\nGoing to run ansible playbook:\n{0}\n\n'.format(
-                    ' '.join(cmd_for_log)
-                    )
+                '\n\nGoing to run ansible playbook:\n'
+                '{0}\nrun_id:{1}\n\n'.format(
+                    ' '.join(cmd_for_log),
+                    random_run_id
+                )
             )
 
             result = subprocess.run(
@@ -203,7 +210,10 @@ class AnsiblePlaybook(object):
             if not local_extra_vars['skip_errors']:
                 if result.returncode != 0:
                     LOGGER.error(
-                        'Failed to run:\n{0}'.format(' '.join(cmd_for_log))
+                        'Failed to run:\n{0}\nrun_id: {1}'.format(
+                            ' '.join(cmd_for_log),
+                            random_run_id
+                        )
                     )
 
         return result.returncode
