@@ -28,16 +28,6 @@ class AnsiblePlaybook(object):
         self._hosts = set()
         self._cleanup_output = cleanup_output
 
-        hosts = self._get_hosts_by_group(
-            self._ansible_playbook_inventory,
-            'all'
-        )
-
-        hosts.append('localhost')
-        hosts.append('127.0.0.1')
-
-        self._hosts.update(hosts)
-
         LOGGER.info('Output path: {0}'.format(self._path_str))
         LOGGER.info('CWD: {0}'.format(self._ansible_playbook_directory))
 
@@ -142,7 +132,6 @@ class AnsiblePlaybook(object):
 
         return parent_path
 
-
     def run_playbook(self, play_filename, extra_vars_dict=None):
         if not extra_vars_dict:
             extra_vars_dict = {}
@@ -155,6 +144,22 @@ class AnsiblePlaybook(object):
             local_extra_vars['gather_facts_for_pb'] = False
         if 'play_host_groups' not in local_extra_vars:
             local_extra_vars['play_host_groups'] = 'localhost'
+
+        if not self._hosts:
+            local_hosts = ['localhost', '127.0.0.1']
+            hosts = self._get_hosts_by_group(
+                self._ansible_playbook_inventory,
+                'all'
+            )
+
+            group = local_extra_vars['play_host_groups']
+            if not hosts and group not in local_hosts:
+                raise RuntimeError(
+                    'Failed to list hosts. Will use localhost only'
+                )
+
+            hosts.extend(local_hosts)
+            self._hosts.update(hosts)
 
         path = self._generate_parent_play(self._ansible_playbook_directory, play_filename)
         cmd = self._get_ansible_cmd(
