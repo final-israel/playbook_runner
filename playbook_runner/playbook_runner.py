@@ -46,8 +46,7 @@ class AnsiblePlaybook(object):
                 )
 
     @staticmethod
-    def _get_ansible_cmd(inventory_file, playbook_file,
-                        extra_vars_dict=None):
+    def _get_ansible_cmd(inventory_file, playbook_file, extra_vars_dict):
         """
         Return process args list for ansible-playbook run.
         """
@@ -55,22 +54,22 @@ class AnsiblePlaybook(object):
             "ansible-playbook",
             "-vv",
             "--fork",
-            "50",
+            extra_vars_dict['fork_factor'],
             "--timeout", "60",
             "-i", inventory_file,
             playbook_file,
         ]
-        if extra_vars_dict:
-            extra_vars = ''
-            for k, v in extra_vars_dict.items():
-                if type(v) == str:
-                    extra_vars += '{}="{}" '.format(k, v)
-                else:
-                    extra_vars += '{}="{}" '.format(k, v)
 
-            extra_vars = extra_vars[:-1]
-            ansible_command.insert(-1, '--extra-vars')
-            ansible_command.insert(-1, extra_vars)
+        extra_vars = ''
+        for k, v in extra_vars_dict.items():
+            if type(v) == str:
+                extra_vars += '{}="{}" '.format(k, v)
+            else:
+                extra_vars += '{}="{}" '.format(k, v)
+
+        extra_vars = extra_vars[:-1]
+        ansible_command.insert(-1, '--extra-vars')
+        ansible_command.insert(-1, extra_vars)
 
         return ansible_command
 
@@ -152,6 +151,8 @@ class AnsiblePlaybook(object):
             local_extra_vars['gather_facts_for_pb'] = False
         if 'play_host_groups' not in local_extra_vars:
             local_extra_vars['play_host_groups'] = 'localhost'
+        if 'fork_factor' not in local_extra_vars:
+            local_extra_vars['fork_factor'] = 15
 
         if not self._hosts:
             local_hosts = ['localhost', '127.0.0.1']
