@@ -152,7 +152,7 @@ class AnsiblePlaybook(object):
         if 'play_host_groups' not in local_extra_vars:
             local_extra_vars['play_host_groups'] = 'localhost'
         if 'fork_factor' not in local_extra_vars:
-            local_extra_vars['fork_factor'] = 15
+            local_extra_vars['fork_factor'] = 50
 
         if not self._hosts:
             local_hosts = ['localhost', '127.0.0.1']
