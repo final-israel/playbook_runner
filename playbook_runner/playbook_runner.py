@@ -28,6 +28,15 @@ class AnsiblePlaybook(object):
 
         self._path_str = tempfile.mkdtemp(prefix='playbook_runner_')
 
+        formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+        exception_log_filename = '{0}/exception_logger.log'.format(self._path_str)
+        handler = logging.FileHandler(exception_log_filename)
+        handler.setFormatter(formatter)
+
+        self._exception_logger = logging.getLogger('playbook_runner_exception_logger')
+        self._exception_logger.setLevel(logging.INFO)
+        self._exception_logger.addHandler(handler)
+
         self._hosts = set()
         self._cleanup_output = cleanup_output
 
@@ -73,6 +82,62 @@ class AnsiblePlaybook(object):
 
         return ansible_command
 
+    def _run_subprocess_ansible(cmd, skip_errors, timeout):
+        cmd_for_log = [shlex.quote(s) for s in cmd]
+        random_run_id = ''.join(
+            random.choices(
+                string.ascii_uppercase + string.digits, k=64
+            )
+        )
+
+        ansible_output_path = '{0}/ansible_output_path.txt'.format(
+            self._path_str
+        )
+
+        err = False
+        result = None
+        our_env = os.environ.copy()
+        our_env["ANSIBLE_HOST_KEY_CHECKING"] = "False"
+        with open(ansible_output_path, "a+") as f_ansible_output_path:
+            f_ansible_output_path.write(
+                '\n\nGoing to run:\n'
+                '{0}\nrun_id:{1}\n\n'.format(
+                    ' '.join(cmd_for_log),
+                    random_run_id
+                )
+            )
+
+            try:
+                result = subprocess.run(
+                    cmd,
+                    cwd=self._ansible_playbook_directory,
+                    timeout=timeout,
+                    stdout=f_ansible_output_path,
+                    stderr=subprocess.STDOUT,
+                    env=our_env
+                )
+            except Exception as exc:
+                self._exception_logger.error(
+                    'Failed executing subprocess for '
+                    'run_id: {0}\ncmd: {2}\n'.format(
+                        random_run_id,
+                        ' '.join(cmd_for_log)
+                        )
+                    )
+
+                err = True
+
+            if err or not skip_errors:
+                if result.returncode != 0:
+                    msg = 'Failed to run:\n{0}\nrun_id: {1}'.format(
+                        ' '.join(cmd_for_log), random_run_id)
+                    if err:
+                        msg = '{0}\nCheck exception log for details'.format(msg)
+
+                    LOGGER.error(msg)
+
+            return err, result
+
     def _get_hosts_by_group(self, inventory, group):
         get_hosts_by_group_cmd = [
             "ansible",
@@ -84,21 +149,13 @@ class AnsiblePlaybook(object):
             group
         ]
 
-        result = subprocess.run(
+        err, result = _run_subprocess_ansible(
             get_hosts_by_group_cmd,
-            cwd=self._ansible_playbook_directory,
-            timeout=60,
-            stderr=subprocess.PIPE,
-            stdout=subprocess.PIPE
+            False,
+            20
         )
-
-        if result.returncode != 0:
-            raise RuntimeError(
-                'Failed to run list-hosts. stdout: {0}, stderr: {1}'.format(
-                    result.stdout,
-                    result.stderr
-                )
-            )
+        if err:
+            raise RuntimeError('Failed to run list-hosts view exception log')
 
         hosts_in_group = []
         tmp = result.stdout.decode('utf8').split()
@@ -135,11 +192,6 @@ class AnsiblePlaybook(object):
         return parent_path
 
     def run_playbook(self, play_filename, extra_vars_dict=None):
-        random_run_id = ''.join(
-            random.choices(
-                string.ascii_uppercase + string.digits, k=64
-            )
-        )
         if not extra_vars_dict:
             extra_vars_dict = {}
 
@@ -153,6 +205,8 @@ class AnsiblePlaybook(object):
             local_extra_vars['play_host_groups'] = 'localhost'
         if 'fork_factor' not in local_extra_vars:
             local_extra_vars['fork_factor'] = 50
+        if 'max_timeout' not in local_extra_vars:
+            local_extra_vars['max_timeout'] = 120
 
         if not self._hosts:
             local_hosts = ['localhost', '127.0.0.1']
@@ -176,46 +230,19 @@ class AnsiblePlaybook(object):
             path,
             extra_vars_dict=local_extra_vars)
 
-        cmd_for_log = [shlex.quote(s) for s in cmd]
-
         for host in self._hosts:
             file_path = '{0}/{1}.json'.format(self._path_str, host)
             if not os.path.isfile(file_path):
                 with open(file_path, 'w') as f:
                     f.write('[')
 
-        ansible_output_path = '{0}/ansible_output_path.txt'.format(
-            self._path_str
+        err, result = _run_subprocess_ansible(
+            cmd,
+            local_extra_vars['skip_errors'],
+            local_extra_vars['max_timeout']
         )
-
-        our_env = os.environ.copy()
-        our_env["ANSIBLE_HOST_KEY_CHECKING"] = "False"
-        with open(ansible_output_path, "a+") as f_ansible_output_path:
-            f_ansible_output_path.write(
-                '\n\nGoing to run ansible playbook:\n'
-                '{0}\nrun_id:{1}\n\n'.format(
-                    ' '.join(cmd_for_log),
-                    random_run_id
-                )
-            )
-
-            result = subprocess.run(
-                cmd,
-                cwd=self._ansible_playbook_directory,
-                timeout=120,
-                stdout=f_ansible_output_path,
-                stderr=subprocess.STDOUT,
-                env=our_env
-            )
-
-            if not local_extra_vars['skip_errors']:
-                if result.returncode != 0:
-                    LOGGER.error(
-                        'Failed to run:\n{0}\nrun_id: {1}'.format(
-                            ' '.join(cmd_for_log),
-                            random_run_id
-                        )
-                    )
+        if err:
+            raise RuntimeError('Failed to run playbook view exception log')
 
         return result.returncode
 
