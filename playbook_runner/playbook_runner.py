@@ -190,7 +190,7 @@ class AnsiblePlaybook(object):
     def _generate_parent_play(self, dir_path, play_filename):
         playbook_path = os.path.join(dir_path, play_filename)
         tmplt_path = os.path.join(os.path.dirname(__file__), 'parent_play.tmplt')
-        parent_path = '{0}/{1}.json'.format(self._path_str, play_filename + '.parent')
+        parent_path = '{0}/{1}.yml'.format(self._path_str, play_filename + '.parent')
 
         with open(tmplt_path, "r") as tmplt_file:
             tmplt = Template(tmplt_file.read())
