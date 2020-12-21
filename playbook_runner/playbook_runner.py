@@ -141,12 +141,11 @@ class AnsiblePlaybook(object):
                 err = True
 
             if err or not skip_errors:
-                if result.returncode != 0:
-                    msg = 'Failed to run:\n{0}\nrun_id: {1}'.format(
-                        ' '.join(cmd_for_log), random_run_id)
-                    if err:
-                        msg = '{0}\nCheck exception log for details'.format(msg)
-
+                if err or result.returncode != 0:
+                    msg = 'Failed to run:\n{0}\nrun_id: {1}\n' \
+                          'Check exception log for details'.format(
+                            ' '.join(cmd_for_log), random_run_id
+                    )
                     LOGGER.error(msg)
 
             return err, result
