@@ -122,13 +122,6 @@ class AnsiblePlaybook(object):
                     stderr=subprocess.PIPE,
                     env=our_env
                 )
-
-                f_ansible_output_path.write(
-                    'STDOUT:\n{0}\n'.format(result.stdout.decode("utf-8"))
-                )
-                f_ansible_output_path.write(
-                    'STDERR:\n{0}\n\n\n'.format(result.stderr.decode("utf-8"))
-                )
             except Exception as exc:
                 self._exception_logger.error(
                     'Failed executing subprocess for '
@@ -139,6 +132,19 @@ class AnsiblePlaybook(object):
                     )
 
                 err = True
+            finally:
+                if result and result.stdout:
+                    f_ansible_output_path.write(
+                        'STDOUT:\n{0}\n'.format(
+                            result.stdout.decode("utf-8")
+                        )
+                    )
+                if result and result.stderr:
+                    f_ansible_output_path.write(
+                        'STDERR:\n{0}\n\n\n'.format(
+                            result.stderr.decode("utf-8")
+                        )
+                    )
 
             if err or not skip_errors:
                 if err or result.returncode != 0:
