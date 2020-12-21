@@ -82,7 +82,7 @@ class AnsiblePlaybook(object):
 
         return ansible_command
 
-    def _run_subprocess_ansible(cmd, skip_errors, timeout):
+    def _run_subprocess_ansible(self, cmd, skip_errors, timeout):
         cmd_for_log = [shlex.quote(s) for s in cmd]
         random_run_id = ''.join(
             random.choices(
@@ -149,7 +149,7 @@ class AnsiblePlaybook(object):
             group
         ]
 
-        err, result = _run_subprocess_ansible(
+        err, result = self._run_subprocess_ansible(
             get_hosts_by_group_cmd,
             False,
             20
@@ -236,7 +236,7 @@ class AnsiblePlaybook(object):
                 with open(file_path, 'w') as f:
                     f.write('[')
 
-        err, result = _run_subprocess_ansible(
+        err, result = self._run_subprocess_ansible(
             cmd,
             local_extra_vars['skip_errors'],
             local_extra_vars['max_timeout']
