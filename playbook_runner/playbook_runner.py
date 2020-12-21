@@ -71,6 +71,10 @@ class AnsiblePlaybook(object):
             playbook_file,
         ]
 
+        if extra_vars_dict['strace']:
+            ansible_command.insert(0, 'strace')
+            ansible_command.insert(1, '-f')
+
         extra_vars = ''
         for k, v in extra_vars_dict.items():
             if type(v) == str:
@@ -216,6 +220,8 @@ class AnsiblePlaybook(object):
             local_extra_vars['fork_factor'] = 50
         if 'max_timeout' not in local_extra_vars:
             local_extra_vars['max_timeout'] = 120
+        if 'strace' not in local_extra_vars:
+            local_extra_vars['strace'] = False
 
         if not self._hosts:
             local_hosts = ['localhost', '127.0.0.1']

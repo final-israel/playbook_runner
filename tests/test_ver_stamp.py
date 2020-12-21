@@ -11,7 +11,8 @@ def run_shell_command(host, cmd, ap):
     return ap.run_playbook(
         'run_shell_command.yml',
         {'play_host_groups': host,
-         'shell_command': cmd
+         'shell_command': cmd,
+         'strace': False
          }
     )
 
