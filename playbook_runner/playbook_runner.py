@@ -63,9 +63,11 @@ class AnsiblePlaybook(object):
             "ansible-playbook",
             "-vv",
             "--fork",
-            extra_vars_dict['fork_factor'],
-            "--timeout", "60",
-            "-i", inventory_file,
+            str(extra_vars_dict['fork_factor']),
+            "--timeout",
+            "60",
+            "-i",
+            inventory_file,
             playbook_file,
         ]
 
@@ -100,8 +102,8 @@ class AnsiblePlaybook(object):
         our_env["ANSIBLE_HOST_KEY_CHECKING"] = "False"
         with open(ansible_output_path, "a+") as f_ansible_output_path:
             f_ansible_output_path.write(
-                '\n\nGoing to run:\n'
-                '{0}\nrun_id:{1}\n\n'.format(
+                'Going to run:\n'
+                '{0}\nrun_id: {1}\n'.format(
                     ' '.join(cmd_for_log),
                     random_run_id
                 )
@@ -112,14 +114,21 @@ class AnsiblePlaybook(object):
                     cmd,
                     cwd=self._ansible_playbook_directory,
                     timeout=timeout,
-                    stdout=f_ansible_output_path,
-                    stderr=subprocess.STDOUT,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
                     env=our_env
+                )
+
+                f_ansible_output_path.write(
+                    'STDOUT:\n{0}\n'.format(result.stdout)
+                )
+                f_ansible_output_path.write(
+                    'STDERR:\n{0}\n\n\n'.format(result.stderr)
                 )
             except Exception as exc:
                 self._exception_logger.error(
                     'Failed executing subprocess for '
-                    'run_id: {0}\ncmd: {2}\n'.format(
+                    'run_id: {0}\ncmd: {1}\n'.format(
                         random_run_id,
                         ' '.join(cmd_for_log)
                         )
@@ -152,7 +161,7 @@ class AnsiblePlaybook(object):
         err, result = self._run_subprocess_ansible(
             get_hosts_by_group_cmd,
             False,
-            20
+            20,
         )
         if err:
             raise RuntimeError('Failed to run list-hosts view exception log')
