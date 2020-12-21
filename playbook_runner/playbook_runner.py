@@ -120,10 +120,10 @@ class AnsiblePlaybook(object):
                 )
 
                 f_ansible_output_path.write(
-                    'STDOUT:\n{0}\n'.format(result.stdout)
+                    'STDOUT:\n{0}\n'.format(result.stdout.decode("utf-8"))
                 )
                 f_ansible_output_path.write(
-                    'STDERR:\n{0}\n\n\n'.format(result.stderr)
+                    'STDERR:\n{0}\n\n\n'.format(result.stderr.decode("utf-8"))
                 )
             except Exception as exc:
                 self._exception_logger.error(
