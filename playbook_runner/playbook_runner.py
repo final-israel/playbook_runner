@@ -122,8 +122,8 @@ class AnsiblePlaybook(object):
                     stderr=subprocess.PIPE,
                     env=our_env
                 )
-            except Exception as exc:
-                self._exception_logger.error(
+            except Exception:
+                self._exception_logger.exception(
                     'Failed executing subprocess for '
                     'run_id: {0}\ncmd: {1}\n'.format(
                         random_run_id,
